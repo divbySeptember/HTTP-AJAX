@@ -4,67 +4,63 @@ import axios from 'axios';
 import FriendsList from './components/FriendsList';
 import FriendsForm from './components/FriendsForm';
 
+import { BrowserRouter as  Route} from "react-router-dom";
+
 class App extends Component {
   constructor() {
     super();
     this.state = {
-      friends: [ {
-        id: '',
-        name: '',
-        age: '',
-        email: ''
-        }
-      ],
-      name: "",
-      age: "",
-      email: ""
+      friends: []
     };
   }
 
-  componentDidMount () {
-    axios.get('http://localhost:5000/friends')
-    .then(response => {
-      this.setState({ friends: response.data });
-    })
-    .catch(err => console.log("You dun goofed!", err));
+  componentDidMount() {
+    this.getFriends();
   }
 
-  addFriend = event => {
-    event.preventDefault();
-    if(this.state.name)
-    axios.post('http://localhost:5000/friends', {name: this.state.name, age: this.state.age, email: this.state.email})
+  getFriends() {
+    axios
+    .get(`http://localhost:5000/friends`)
     .then(response => {
-      this.setState({ friends: response.data, name: "", age: "", email: "" });
+      this.setState({ friends: response.data })
     })
-    .catch(err => console.log("You dun goofed!", err));
+    .catch(error => {
+      console.error(error)
+    });
   }
 
+   // example edit function with put request
+   editFriend = (id) => {
+    const updatedFriendObj = {
+    name: this.state.name,
+    age: this.state.age,
+    email: this.state.email
+    }
+    axios.put(`http://localhost:5000/friends/${id}`, updatedFriendObj)
+    .then(response => {
+    this.setState({
+        friends: response.data
+    })
+    })
+    .catch((err) => console.log(err))
+}
 
-
-
-  handleInput = e => {
-    this.setState({ [e.target.name]: e.target.value })
-  };
+    //  example delete function with delete request
+    deleteFriend = (id) => {
+        axios.delete(`http://localhost:5000/friends/${id}`)
+        .then(response => {
+        this.setState({
+            friends: response.data
+        })
+        }) 
+        .catch((err) => console.log(err))
+    }
 
   render() {
     return (
       <div className="App">
-       <h1>Friends List</h1>
-       <div className="friends-list">
-
-       {this.state.friends.map(friend => (
-          <FriendsList key={friend.id} friend={friend}  />
-        ))}
-       </div>
-       <div className="friends-form">
-       <FriendsForm
-        addFriend={this.addFriend}
-        inputName={this.state.name}
-        inputAge={this.state.age}
-        inputEmail={this.state.email}
-        handleInput={this.handleInput} 
-        />
-        </div>
+        <Route path="/" render={props => <FriendsList {...props} deleteFriend={this.deleteFriend} editFriend={this.editFriend} friendslist={this.state.friends} />} />
+        <Route path="/" render={props => <FriendsForm {...props} getFriends={this.getFriends}/> } />
       </div>
     );
   }
